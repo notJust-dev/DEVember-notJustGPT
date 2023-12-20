@@ -9,6 +9,7 @@ import {
   FlatList,
   KeyboardAvoidingView,
   Platform,
+  Text,
 } from 'react-native';
 
 import Message from '../components/Message';
@@ -40,6 +41,7 @@ export default function App() {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
       >
+        <Text>Key: {process.env.EXPO_PUBLIC_SHARABLE_KEY}</Text>
         <FlatList
           data={message}
           contentContainerStyle={{ gap: 10, padding: 10 }}

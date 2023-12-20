@@ -18,7 +18,11 @@
     "react-native-screens": "~3.27.0",
     "expo-linking": "~6.2.1",
     "expo-constants": "~15.4.2",
-    "react-native-gesture-handler": "~2.14.0"
+    "react-native-gesture-handler": "~2.14.0",
+    "react-native-web": "~0.19.6",
+    "react-dom": "18.2.0",
+    "typescript": "^5.3.0",
+    "@types/react": "~18.2.45"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0"
