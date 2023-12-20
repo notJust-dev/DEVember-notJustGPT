@@ -1,12 +1,65 @@
+import React, { useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import {
+  StyleSheet,
+  Text,
+  View,
+  TextInput,
+  SafeAreaView,
+  Button,
+  FlatList,
+  KeyboardAvoidingView,
+  Platform,
+} from 'react-native';
+
+import Message from './src/components/Message';
 
 export default function App() {
+  const [message, setMessages] = useState([
+    { role: 'system', content: 'You are a helpful assistant.' },
+    { role: 'user', content: 'Hello' },
+    { role: 'assistant', content: 'Hello there, how can I help' },
+  ]);
+
+  const [prompt, setPrompt] = useState('');
+
+  const onSend = () => {
+    setMessages((existingMessage) => [
+      ...existingMessage,
+      {
+        role: 'user',
+        content: prompt,
+      },
+    ]);
+
+    setPrompt('');
+  };
+
   return (
-    <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
+    <SafeAreaView style={styles.container}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={{ flex: 1 }}
+      >
+        <FlatList
+          data={message}
+          contentContainerStyle={{ gap: 10, padding: 10 }}
+          renderItem={({ item }) => <Message message={item} />}
+        />
+
+        <View style={styles.footer}>
+          <TextInput
+            value={prompt}
+            onChangeText={setPrompt}
+            placeholder="how can I help you?"
+            style={styles.input}
+          />
+          <Button title="Send" onPress={onSend} />
+        </View>
+      </KeyboardAvoidingView>
+
       <StatusBar style="auto" />
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -14,7 +67,26 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
+    // alignItems: 'center',
+    // justifyContent: 'center',
   },
+  input: {
+    borderWidth: 1,
+    borderColor: 'gainsboro',
+    padding: 10,
+    borderRadius: 50,
+    flex: 1,
+  },
+  footer: {
+    marginTop: 'auto',
+    flexDirection: 'row',
+    padding: 10,
+  },
+  message: {
+    backgroundColor: 'gainsboro',
+    padding: 10,
+    borderRadius: 10,
+    width: '90%',
+  },
+  messageText: {},
 });
