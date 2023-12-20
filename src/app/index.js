@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import {
   StyleSheet,
@@ -9,30 +9,51 @@ import {
   FlatList,
   KeyboardAvoidingView,
   Platform,
-  Text,
 } from 'react-native';
 
 import Message from '../components/Message';
 
 export default function App() {
-  const [message, setMessages] = useState([
-    { role: 'system', content: 'You are a helpful assistant.' },
+  const [messages, setMessages] = useState([
+    {
+      role: 'system',
+      content:
+        'You are a helpful assistant. You are very sarcastic and passive aggresive',
+    },
     { role: 'user', content: 'Hello' },
     { role: 'assistant', content: 'Hello there, how can I help' },
   ]);
-
   const [prompt, setPrompt] = useState('');
 
-  const onSend = () => {
-    setMessages((existingMessage) => [
-      ...existingMessage,
-      {
-        role: 'user',
-        content: prompt,
-      },
-    ]);
+  const list = useRef(null);
 
+  useEffect(() => {
+    setTimeout(() => {
+      list.current?.scrollToEnd({ animated: true });
+    }, 10);
+  }, [messages]);
+
+  const onSend = async () => {
+    const userMessage = {
+      role: 'user',
+      content: prompt,
+    };
+
+    setMessages((existingMessage) => [...existingMessage, userMessage]);
     setPrompt('');
+
+    const result = await fetch('http://localhost:8081/completion', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify([...messages, userMessage]),
+    });
+
+    const resultJSON = await result.json();
+    const answer = resultJSON.choices?.[0]?.message;
+
+    setMessages((existingMessage) => [...existingMessage, answer]);
   };
 
   return (
@@ -41,9 +62,9 @@ export default function App() {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
       >
-        <Text>Key: {process.env.EXPO_PUBLIC_SHARABLE_KEY}</Text>
         <FlatList
-          data={message}
+          ref={list}
+          data={messages.filter((m) => m.role !== 'system')}
           contentContainerStyle={{ gap: 10, padding: 10 }}
           renderItem={({ item }) => <Message message={item} />}
         />
@@ -82,6 +103,8 @@ const styles = StyleSheet.create({
     marginTop: 'auto',
     flexDirection: 'row',
     padding: 10,
+    alignItems: 'center',
+    gap: 10,
   },
   message: {
     backgroundColor: 'gainsboro',

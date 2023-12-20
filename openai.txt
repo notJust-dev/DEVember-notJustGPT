@@ -13,3 +13,9 @@ curl https://api.openai.com/v1/chat/completions   -H "Content-Type: application/
       }
     ]
   }'
+
+
+curl -X POST http://localhost:8081/completion \
+  -d '{
+    "messages": [{"content": "text"}]
+  }'
