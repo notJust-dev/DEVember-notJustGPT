@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import {
   StyleSheet,
-  Text,
   View,
   TextInput,
   SafeAreaView,
@@ -12,7 +11,7 @@ import {
   Platform,
 } from 'react-native';
 
-import Message from './src/components/Message';
+import Message from '../components/Message';
 
 export default function App() {
   const [message, setMessages] = useState([
