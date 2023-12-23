@@ -9,9 +9,23 @@ import {
   FlatList,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
+  Text,
 } from 'react-native';
 
 import Message from '../components/Message';
+
+const fetchApi = async (endpoint, bodyJson) => {
+  const result = await fetch(endpoint, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(bodyJson),
+  });
+
+  return await result.json();
+};
 
 export default function App() {
   const [messages, setMessages] = useState([
@@ -24,6 +38,7 @@ export default function App() {
     { role: 'assistant', content: 'Hello there, how can I help' },
   ]);
   const [prompt, setPrompt] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   const list = useRef(null);
 
@@ -34,6 +49,10 @@ export default function App() {
   }, [messages]);
 
   const onSend = async () => {
+    if (isLoading) {
+      return;
+    }
+    setIsLoading(true);
     const userMessage = {
       role: 'user',
       content: prompt,
@@ -42,18 +61,64 @@ export default function App() {
     setMessages((existingMessage) => [...existingMessage, userMessage]);
     setPrompt('');
 
-    const result = await fetch('http://localhost:8081/completion', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify([...messages, userMessage]),
-    });
+    try {
+      const shouldGenerateImage = await isImagePrompt(prompt);
 
-    const resultJSON = await result.json();
+      if (shouldGenerateImage) {
+        await generateImage();
+      } else {
+        await generateCompletion(userMessage);
+      }
+    } catch (e) {
+      Alert.alert('Something went wrong');
+    }
+
+    setIsLoading(false);
+  };
+
+  const generateCompletion = async (userMessage) => {
+    const resultJSON = await fetchApi('/completion', [
+      ...messages.filter((m) => m.role !== 'image'),
+      userMessage,
+    ]);
     const answer = resultJSON.choices?.[0]?.message;
 
     setMessages((existingMessage) => [...existingMessage, answer]);
+  };
+
+  const isImagePrompt = async (prompt) => {
+    const resultJSON = await fetchApi('/completion', [
+      {
+        role: 'system',
+        content:
+          'You are an AI that categorizes prompts into image generate requests and completion requests. You only answer with one number 0 to 1.0 that represents how confident you are that the prompt is for image genreation',
+      },
+      {
+        role: 'user',
+        content: `Categorize the prompt that I will give you and tell me if it is a prompt for image generation. Answer with a value from 0 to 1.0 that represents how confident you are that the prompt is for image generation. 
+        The prompt is: ${prompt}
+        `,
+      },
+    ]);
+    const answer = resultJSON.choices?.[0]?.message;
+    if (answer) {
+      return Number(answer.content) > 0.75;
+    }
+
+    return false;
+  };
+
+  const generateImage = async () => {
+    const data = await fetchApi('/imagine', { prompt });
+
+    if (data?.data?.[0]?.url) {
+      const imageMessage = {
+        role: 'image',
+        content: data.data[0].url,
+      };
+
+      setMessages((existingMessage) => [...existingMessage, imageMessage]);
+    }
   };
 
   return (
@@ -67,6 +132,14 @@ export default function App() {
           data={messages.filter((m) => m.role !== 'system')}
           contentContainerStyle={{ gap: 10, padding: 10 }}
           renderItem={({ item }) => <Message message={item} />}
+          ListFooterComponent={() =>
+            isLoading && (
+              <>
+                <Text>Generating... </Text>
+                <ActivityIndicator />
+              </>
+            )
+          }
         />
 
         <View style={styles.footer}>

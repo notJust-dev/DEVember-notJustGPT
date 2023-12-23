@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, Text } from 'react-native';
+import { View, StyleSheet, Text, Image } from 'react-native';
 
 export default function Message({ message }) {
   return (
@@ -12,14 +12,18 @@ export default function Message({ message }) {
         },
       ]}
     >
-      <Text
-        style={[
-          styles.messageText,
-          { color: message.role === 'user' ? 'white' : 'black' },
-        ]}
-      >
-        {message.content}
-      </Text>
+      {message.role === 'image' ? (
+        <Image source={{ uri: message.content }} style={styles.image} />
+      ) : (
+        <Text
+          style={[
+            styles.messageText,
+            { color: message.role === 'user' ? 'white' : 'black' },
+          ]}
+        >
+          {message.content}
+        </Text>
+      )}
     </View>
   );
 }
@@ -32,4 +36,8 @@ const styles = StyleSheet.create({
     width: '90%',
   },
   messageText: {},
+  image: {
+    width: '100%',
+    aspectRatio: 1,
+  },
 });
